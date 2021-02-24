@@ -1,7 +1,10 @@
 var express = require("express");
 var axios = require("axios");
+var cors = require('cors');
 var app = express();
-let port = process.env.PORT || 3000;
+let port = process.env.PORT || 3100;
+
+app.use(cors())
 
 app.get("/", (req, res) => {
     res.send("API is functioning");
