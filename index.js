@@ -39,32 +39,67 @@ app.get("/account/", (req, res) => {
 
 app.get("/images/", async (req, res) => {
     // console.log(req.query);
+    const END_POINT_ADDRESS = '/images/ : '
     var userInfoObject;
     var accountId;
 
-    if (req.query.u && req.query.uid) res.send("/images/ : Only username OR user ID can be supplied.");
+    if (req.query.u && req.query.uid) res.sendStatus(END_POINT_ADDRESS & "Only username OR user ID can be supplied.");
 
     if (req.query.u) { // ?u={username}
         // TODO ADD VALIDATION TO MAKE SURE THIS HAS A MAX LENGTH
         console.log("Looking up user ID..");
-        userInfoObject = await recnet.getUserInfo('Rocko');
+        userInfoObject = await recnet.getUserInfo(req.query.u);
         accountId = userInfoObject.accountId;
-    }
 
-    if (req.query.uid) { // ?uid={username}
-        // TODO ADD VALIDATION TO MAKE SURE THIS IS NUMERIC
+    } else if (req.query.uid) { // ?uid={username}
         console.log("User ID supplied..");
-        console.log(req.query.uid);
-        accountId = req.query.uid;
+        accountId = parseInt(req.query.uid);
+
+        if (accountId != req.query.uid) {
+            res.send(END_POINT_ADDRESS + 'UID value must be an integer value.');
+            return;
+        }
+    
+        if (accountId <= 0) {
+            res.send(END_POINT_ADDRESS + 'UID value must be greater than 0.');
+            return;
+        }
     }
 
-    var url = 'https://api.rec.net/api/images/v4/player/' + accountId;
-    console.log('Fired!');
-    axios.get(url)
-        .then(response => {
-            res.json(response.data);
-        });
+    if (accountId >= 1) {
+        var url = 'https://api.rec.net/api/images/v4/player/' + accountId; // Default if type is not provided
+        if (req.query.type) {
+            var type = parseInt(req.query.type);
 
+            if (type != req.query.type) {
+                res.send(END_POINT_ADDRESS + 'Type value must be an integer value [0-2].');
+                return;
+            }
+
+            switch (type) {
+                case 0: // Global
+                    url = '';
+                    break;
+                case 1: // User Feed
+                    url = '';
+                    break;
+                case 2: // User Library
+                    url = '';
+                    break;
+            }
+        }
+
+
+
+        // var dtToday = moment().format();
+        // var urlUserPhotos = 'https://api.rec.net/api/images/v4/player/' + userId + '?skip=0&take=100000';
+        // var urlUserFeed = 'https://api.rec.net/api/images/v3/feed/player/' + userId + '?skip=0&take=100000';
+        // var urlGlobalFeed = 'https://api.rec.net/api/images/v3/feed/global?skip=0&take=3000&since=' + dtToday;
+
+
+        var imageData = await recnet.getData(url);
+        res.json(imageData);
+    }
     // if (req.query.type) { // ?type={username}
 });
 

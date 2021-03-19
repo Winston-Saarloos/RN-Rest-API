@@ -2,11 +2,14 @@ var axios = require("axios");
 
 // Function takes in a RecNet username and returns back user information JSON object
 async function getUserInfo(recRoomUsername) {
+    // https://accounts.rec.net/account?username=rocko
     var url = 'https://accounts.rec.net/account?username=' + recRoomUsername;
-    
-    return new Promise(function (resolve, reject) {
+    var userInfo = await getData(url);
+    return userInfo;
+}
 
-        // https://accounts.rec.net/account?username=rocko
+async function getData(url) {
+     return new Promise(function (resolve, reject) {
         axios.get(url)
             .then(function (response) {
                 // handle success
@@ -20,7 +23,9 @@ async function getUserInfo(recRoomUsername) {
             .then(function () {
                 // always executed
             });
-    });
+     });
 }
 
+// Export Lines
 module.exports.getUserInfo = getUserInfo;
+module.exports.getData = getData;
