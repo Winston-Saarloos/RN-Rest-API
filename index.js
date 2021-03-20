@@ -7,33 +7,31 @@ let port = process.env.PORT || 3000;
 
 // RecNet Modules
 var recnet = require('./recNet');
+var versionNumber = '0.0.6'
 
 app.use(cors())
 
 app.get("/", (req, res) => {
-    res.send("RN-ExtraTools.com API is online!");
+    res.send("RN-ExtraTools.com API is online! V" + versionNumber);
 });
 
 // Takes a player's username or ID and returns back data on the user
-app.get("/account/", (req, res) => {
+app.get("/account/", async (req, res) => {
+    var data = {};
     if (req.query.u) { // ?u={username}
         var url = 'https://accounts.rec.net/account?username=' + req.query.u;
-        axios.get(url)
-            .then(response => {
-                res.json(response.data);
-            });
+        data = await recnet.getData(url)
+        res.json(data);
+
     } else if (req.query.id) { // ?id={playerId}
         var url = 'https://accounts.rec.net/account/' + req.query.id;
-        axios.get(url)
-            .then(response => {
-                res.json(response.data);
-            });
+        data = await recnet.getData(url)
+        res.json(data);
+
     } else if (req.query.bio) { // ?bio={playerId}
         var url = 'https://accounts.rec.net/account/' + req.query.bio + '/bio';
-        axios.get(url)
-            .then(response => {
-                res.json(response.data);
-            });
+        data = await recnet.getData(url)
+        res.json(data);
     }
 });
 
@@ -41,7 +39,7 @@ app.get("/images/global/", async (req, res) => {
     // Possible Parameters
     // - Date
     // - Take
-    
+
     const END_POINT_ADDRESS = '/images/global : '
     if (req.query.take || req.query.date) {
         var dtToday = moment().format();
