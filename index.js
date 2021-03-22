@@ -1,15 +1,17 @@
 var express = require("express");
-var axios = require("axios");
 var cors = require('cors');
+var bodyParser = require('body-parser');
 var moment = require('moment');
 var app = express();
 let port = process.env.PORT || 3000;
 
+// Classes
+
 // RecNet Modules
 var recnet = require('./recNet');
-var versionNumber = '0.0.6'
+var versionNumber = '0.0.7'
 
-app.use(cors())
+app.use(cors());
 
 app.get("/", (req, res) => {
     res.send("RN-ExtraTools.com API is online! V" + versionNumber);
@@ -36,9 +38,9 @@ app.get("/account/", async (req, res) => {
 });
 
 app.get("/images/global/", async (req, res) => {
-    // Possible Parameters
-    // - Date
-    // - Take
+    //Possible Parameters
+    //- Date
+    //- Take
 
     const END_POINT_ADDRESS = '/images/global : '
     if (req.query.take || req.query.date) {
