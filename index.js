@@ -113,7 +113,8 @@ app.get("/images/", async (req, res) => {
     }
 
     if (accountId >= 1) { // types 1 and 2 should be evaluated in here
-        var url = 'https://api.rec.net/api/images/v4/player/' + accountId; // Default if type is not provided
+        var defaultUrl = 'https://api.rec.net/api/images/v4/player/' + accountId + '?skip=0&take=100000';
+        var url = defaultUrl // Default if type is not provided
         if (req.query.type) {
             var type = parseInt(req.query.type);
 
@@ -123,15 +124,15 @@ app.get("/images/", async (req, res) => {
             }
 
             switch (type) {
-                case 0: // Global
-                    url = '';
+                case 0: // User Feed
+                    url = 'https://api.rec.net/api/images/v3/feed/player/' + accountId + '?skip=0&take=100000';
                     break;
-                case 1: // User Feed
-                    url = '';
+                case 1: // User Library
+                    url = defaultUrl;
                     break;
-                case 2: // User Library
-                    url = '';
-                    break;
+                default: //
+                    res.send(END_POINT_ADDRESS + 'Invalid type provided value supplied should be [0-1]');
+                    return;
             }
         }
 
