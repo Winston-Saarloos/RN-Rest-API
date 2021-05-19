@@ -79,12 +79,24 @@ app.get("/images/", async (req, res) => {
     // - Sort [String]
     // - uid [integer]
     // - u [username]
+    // - take [integer]
+    // - skip [integer]
 
 
     // console.log(req.query);
     const END_POINT_ADDRESS = '/images/ : '
     var userInfoObject;
     var accountId;
+    var takeAmount = 100000; // Default Values
+    var skipAmount = 0;
+
+    if (req.query.take) {
+        takeAmount = req.query.take;
+    }
+
+    if (req.query.skip) {
+        skipAmount = req.query.skip;
+    }
 
     if (req.query.u && req.query.uid) {
         res.send(END_POINT_ADDRESS & "Only username OR user ID can be supplied.");
@@ -113,7 +125,7 @@ app.get("/images/", async (req, res) => {
     }
 
     if (accountId >= 1) { // types 1 and 2 should be evaluated in here
-        var defaultUrl = 'https://api.rec.net/api/images/v4/player/' + accountId + '?skip=0&take=100000';
+        var defaultUrl = `https://api.rec.net/api/images/v4/player/${accountId}?skip=${skipAmount}&take=${takeAmount}`;
         var url = defaultUrl // Default if type is not provided
         if (req.query.type) {
             var type = parseInt(req.query.type);
@@ -125,7 +137,7 @@ app.get("/images/", async (req, res) => {
 
             switch (type) {
                 case 0: // User Feed
-                    url = 'https://api.rec.net/api/images/v3/feed/player/' + accountId + '?skip=0&take=100000';
+                    url = `https://api.rec.net/api/images/v3/feed/player/${accountId}?skip=${skipAmount}&take=${takeAmount}`;
                     break;
                 case 1: // User Library
                     url = defaultUrl;
