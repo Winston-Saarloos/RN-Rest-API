@@ -9,7 +9,7 @@ let port = process.env.PORT || 3000;
 
 // RecNet Modules
 var recnet = require('./recNet');
-var versionNumber = '0.0.7'
+var versionNumber = '0.0.8'
 
 app.use(cors());
 
@@ -90,14 +90,17 @@ app.get("/images/", async (req, res) => {
     var takeAmount = 100000; // Default Values
     var skipAmount = 0;
 
+    // ?take={integer}
     if (req.query.take) {
         takeAmount = req.query.take;
     }
 
+    // ?skip={integer}
     if (req.query.skip) {
         skipAmount = req.query.skip;
     }
 
+    // You cannot provide both 'u' and 'uid' parameter arguments
     if (req.query.u && req.query.uid) {
         res.send(END_POINT_ADDRESS & "Only username OR user ID can be supplied.");
         return;
@@ -142,8 +145,12 @@ app.get("/images/", async (req, res) => {
                 case 1: // User Library
                     url = defaultUrl;
                     break;
+                case 2:
+                    var dtToday = moment().format();
+                    url = `https://api.rec.net/api/images/v3/feed/global?skip=${skipAmount}&take=${takeAmount}&since=${dtToday}`;
+                    break;
                 default: //
-                    res.send(END_POINT_ADDRESS + 'Invalid type provided value supplied should be [0-1]');
+                    res.send(END_POINT_ADDRESS + 'Invalid type provided value supplied should be [0-2].');
                     return;
             }
         }
@@ -151,13 +158,55 @@ app.get("/images/", async (req, res) => {
 
         // type 0 should be evaluated above.  If type 0 then set accountId = -1
 
-        // var dtToday = moment().format();
         // var urlUserPhotos = 'https://api.rec.net/api/images/v4/player/' + userId + '?skip=0&take=100000';
         // var urlUserFeed = 'https://api.rec.net/api/images/v3/feed/player/' + userId + '?skip=0&take=100000';
         // var urlGlobalFeed = 'https://api.rec.net/api/images/v3/feed/global?skip=0&take=3000&since=' + dtToday;
 
 
         var imageData = await recnet.getData(url);
+
+        // Filter Image Data TODO
+
+
+        // Sort Image Data
+        // Newest To Oldest = 0 (default)
+        // Oldest To Newest = 1 
+        // Cheers Ascending = 2
+        // Cheers Descending = 3
+        // Comment Count Ascending = 4
+        // Comment Count Descending = 5
+        if (req.query.sort) {
+            var sort = parseInt(req.query.sort);
+
+            if (sort != req.query.sort) {
+                res.send(END_POINT_ADDRESS + ' sort value must be an integer value [0-5].');
+                return;
+            }
+
+            switch (sort) {
+                case 0: // Newest To Oldest (Default)
+                    break;
+                case 1: // Oldest To Newest
+                    imageData = imageData.reverse();
+                    break;
+                case 2: // Cheers Ascending
+                    imageData = imageData.sort((a, b) => parseInt(a.CheerCount) - parseInt(b.CheerCount));
+                    break;
+                case 3: // Cheers Descending
+                    imageData = imageData.sort((a, b) => parseInt(b.CheerCount) - parseInt(a.CheerCount));
+                    break;
+                case 4: // Comment Count Ascending
+                    imageData = imageData.sort((a, b) => parseInt(a.CommentCount) - parseInt(b.CommentCount));
+                    break;
+                case 5: // Cheers Descending
+                    imageData = imageData.sort((a, b) => parseInt(b.CommentCount) - parseInt(a.CommentCount));
+                    break;
+                default: //
+                    res.send(END_POINT_ADDRESS + 'Invalid sort provided value supplied should be [0-5].');
+                    return;
+            }
+        }
+
         res.json(imageData);
     }
     // if (req.query.type) { // ?type={username}
