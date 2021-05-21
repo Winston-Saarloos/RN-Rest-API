@@ -1,6 +1,6 @@
 var express = require("express");
 var cors = require('cors');
-var bodyParser = require('body-parser');
+//var bodyParser = require('body-parser');
 var moment = require('moment');
 var app = express();
 let port = process.env.PORT || 3000;
@@ -9,7 +9,7 @@ let port = process.env.PORT || 3000;
 
 // RecNet Modules
 var recnet = require('./recNet');
-var versionNumber = '0.0.8'
+var versionNumber = '0.0.9'
 
 app.use(cors());
 
@@ -84,15 +84,21 @@ app.get("/images/", async (req, res) => {
 
 
     // console.log(req.query);
-    const END_POINT_ADDRESS = '/images/ : '
+    const END_POINT_ADDRESS = '/images/ : ';
+    const MAX_RETURN_NUMBER = 100000;
     var userInfoObject;
-    var accountId;
-    var takeAmount = 100000; // Default Values
+    var accountId = 0;
+    var takeAmount = MAX_RETURN_NUMBER; // Default Values
     var skipAmount = 0;
+    var url = '';
 
     // ?take={integer}
     if (req.query.take) {
         takeAmount = req.query.take;
+
+        if (takeAmount > MAX_RETURN_NUMBER) {
+            takeAmount = MAX_RETURN_NUMBER;
+        }
     }
 
     // ?skip={integer}
@@ -100,74 +106,60 @@ app.get("/images/", async (req, res) => {
         skipAmount = req.query.skip;
     }
 
-    // You cannot provide both 'u' and 'uid' parameter arguments
-    if (req.query.u && req.query.uid) {
-        res.send(END_POINT_ADDRESS & "Only username OR user ID can be supplied.");
-        return;
-    }
+    if (req.query.type) {
+        var type = parseInt(req.query.type);
+        // Should verify it parses correctly..
 
-    if (req.query.u) { // ?u={username}
-        // TODO ADD VALIDATION TO MAKE SURE THIS HAS A MAX LENGTH
-        console.log("Looking up user ID..");
-        userInfoObject = await recnet.getUserInfo(req.query.u);
-        accountId = userInfoObject.accountId;
+        if (type == 1 || type == 2) { // Photo Feed or User Photo Library Types
 
-    } else if (req.query.uid) { // ?uid={username}
-        console.log("User ID supplied..");
-        accountId = parseInt(req.query.uid);
-
-        if (accountId != req.query.uid) {
-            res.send(END_POINT_ADDRESS + 'UID value must be an integer value.');
-            return;
-        }
-    
-        if (accountId <= 0) {
-            res.send(END_POINT_ADDRESS + 'UID value must be greater than 0.');
-            return;
-        }
-    }
-
-    if (accountId >= 1) { // types 1 and 2 should be evaluated in here
-        var defaultUrl = `https://api.rec.net/api/images/v4/player/${accountId}?skip=${skipAmount}&take=${takeAmount}`;
-        var url = defaultUrl // Default if type is not provided
-        if (req.query.type) {
-            var type = parseInt(req.query.type);
-
-            if (type != req.query.type) {
-                res.send(END_POINT_ADDRESS + 'Type value must be an integer value [0-2].');
+            // You cannot provide both 'u' and 'uid' parameter arguments
+            if (req.query.u && req.query.uid) {
+                res.send(END_POINT_ADDRESS & "Only username OR user ID can be supplied.");
                 return;
             }
 
-            switch (type) {
-                case 0: // User Feed
-                    url = `https://api.rec.net/api/images/v3/feed/player/${accountId}?skip=${skipAmount}&take=${takeAmount}`;
-                    break;
-                case 1: // User Library
-                    url = defaultUrl;
-                    break;
-                case 2:
-                    var dtToday = moment().format();
-                    url = `https://api.rec.net/api/images/v3/feed/global?skip=${skipAmount}&take=${takeAmount}&since=${dtToday}`;
-                    break;
-                default: //
-                    res.send(END_POINT_ADDRESS + 'Invalid type provided value supplied should be [0-2].');
-                    return;
+            if (!req.query.u && !req.query.uid) {
+                res.send("A username or user ID must be provided with type 1 and 2 requests.");
+                return;
             }
+
+            if (req.query.u) { // ?u={username
+                console.log("Looking up user ID..");
+                userInfoObject = await recnet.getUserInfo(req.query.u);
+                accountId = userInfoObject.accountId;
+
+                if (type == 1) {
+                    url = `https://api.rec.net/api/images/v3/feed/player/${accountId}?skip=${skipAmount}&take=${takeAmount}`;
+                } else if (type == 2) {
+                    url = `https://api.rec.net/api/images/v4/player/${accountId}?skip=${skipAmount}&take=${takeAmount}`;
+                }
+
+            } else if (req.query.uid) {
+                console.log("User ID supplied..");
+                accountId = parseInt(req.query.uid);
+
+                if (accountId != req.query.uid) {
+                    res.send(END_POINT_ADDRESS + 'UID value must be an integer value.');
+                    return;
+                }
+
+                if (accountId <= 0) {
+                    res.send(END_POINT_ADDRESS + 'UID value must be greater than 0.');
+                    return;
+                }
+            }
+
+        } else if (type == 3) { // Global Images (Rec.net home page)
+            var dtToday = moment().format();
+            url = `https://api.rec.net/api/images/v3/feed/global?skip=${skipAmount}&take=${takeAmount}&since=${dtToday}`;
         }
+    }
 
-
-        // type 0 should be evaluated above.  If type 0 then set accountId = -1
-
-        // var urlUserPhotos = 'https://api.rec.net/api/images/v4/player/' + userId + '?skip=0&take=100000';
-        // var urlUserFeed = 'https://api.rec.net/api/images/v3/feed/player/' + userId + '?skip=0&take=100000';
-        // var urlGlobalFeed = 'https://api.rec.net/api/images/v3/feed/global?skip=0&take=3000&since=' + dtToday;
-
-
-        var imageData = await recnet.getData(url);
+    var imageData = {};
+    if (url == '') {
+        imageData = await recnet.getData(url);
 
         // Filter Image Data TODO
-
-
         // Sort Image Data
         // Newest To Oldest = 0 (default)
         // Oldest To Newest = 1 
@@ -184,21 +176,21 @@ app.get("/images/", async (req, res) => {
             }
 
             switch (sort) {
-                case 0: // Newest To Oldest (Default)
+                case 1: // Newest To Oldest (Default)
                     break;
-                case 1: // Oldest To Newest
+                case 2: // Oldest To Newest
                     imageData = imageData.reverse();
                     break;
-                case 2: // Cheers Ascending
+                case 3: // Cheers Ascending
                     imageData = imageData.sort((a, b) => parseInt(a.CheerCount) - parseInt(b.CheerCount));
                     break;
-                case 3: // Cheers Descending
+                case 4: // Cheers Descending
                     imageData = imageData.sort((a, b) => parseInt(b.CheerCount) - parseInt(a.CheerCount));
                     break;
-                case 4: // Comment Count Ascending
+                case 5: // Comment Count Ascending
                     imageData = imageData.sort((a, b) => parseInt(a.CommentCount) - parseInt(b.CommentCount));
                     break;
-                case 5: // Cheers Descending
+                case 6: // Cheers Descending
                     imageData = imageData.sort((a, b) => parseInt(b.CommentCount) - parseInt(a.CommentCount));
                     break;
                 default: //
@@ -206,10 +198,13 @@ app.get("/images/", async (req, res) => {
                     return;
             }
         }
-
-        res.json(imageData);
     }
-    // if (req.query.type) { // ?type={username}
+
+    if (imageData == {}){
+        res.json(imageData);
+    } else {
+        res.send("An error occured fetching image data from Rec.net");
+    }
 });
 
 
@@ -222,14 +217,6 @@ app.get("/images/", async (req, res) => {
 // User:        U:Rocko or U!:Rocko
 // Date:        D:1/13/2021
 // Date-Range:  DR:1/1/2021-1/5/2021
-
-// Sorts
-// Cheers {ASC}
-// Cheers {DSC}
-// Comments {ASC}
-// Comments {DSC}
-// Date Taken {ASC} (Default)
-// Date Taken {DESC}
 
 app.listen(port, () => {
     console.log(`Server running on port http://localhost:${port}`);
