@@ -156,7 +156,7 @@ app.get("/images/", async (req, res) => {
     }
 
     var imageData = {};
-    if (url == '') {
+    if (url != '') {
         imageData = await recnet.getData(url);
 
         // Filter Image Data TODO
@@ -200,7 +200,7 @@ app.get("/images/", async (req, res) => {
         }
     }
 
-    if (imageData == {}){
+    if (imageData.length > 0){
         res.json(imageData);
     } else {
         res.send("An error occured fetching image data from Rec.net");
