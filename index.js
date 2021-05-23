@@ -9,7 +9,7 @@ let port = process.env.PORT || 3000;
 
 // RecNet Modules
 var recnet = require('./recNet');
-var versionNumber = '0.0.9'
+var versionNumber = '0.0.10'
 
 app.use(cors());
 
