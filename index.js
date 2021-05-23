@@ -9,7 +9,7 @@ let port = process.env.PORT || 3000;
 
 // RecNet Modules
 var recnet = require('./recNet');
-var versionNumber = '0.0.10'
+var versionNumber = '0.5.11'
 
 app.use(cors());
 
@@ -76,11 +76,16 @@ app.get("/bulk/users", async (req, res) => {
         var szUrl = 'https://accounts.rec.net/account/bulk';
         var szParams = '';
 
-        for (var i = 0; i < req.query.id.length; i++) {
-            if (i === 0) {
-                szParams = `?id=${req.query.id[i]}`;
-            } else {
-                szParams += `&id=${req.query.id[i]}`;
+        if (typeof req.query.id == 'string') {
+            szParams = `?id=${req.query.id}`;
+
+        } else {
+            for (var i = 0; i < req.query.id.length; i++) {
+                if (i === 0) {
+                    szParams = `?id=${req.query.id[i]}`;
+                } else {
+                    szParams += `&id=${req.query.id[i]}`;
+                }
             }
         }
 
@@ -97,12 +102,17 @@ app.get("/bulk/rooms", async (req, res) => {
         var szUrl = 'https://rooms.rec.net/rooms/bulk';
         var szParams = '';
 
-        for (var i = 0; i < req.query.id.length; i++) {
-            if (i === 0) {
-                szParams = `?id=${req.query.id[i]}`;
-            } else {
-                szParams += `&id=${req.query.id[i]}`;
-            }
+        if (typeof req.query.id == 'string') {
+            szParams = `?id=${req.query.id}`;
+
+        } else {
+            for (var i = 0; i < req.query.id.length; i++) {
+                if (i === 0) {
+                    szParams = `?id=${req.query.id[i]}`;
+                } else {
+                    szParams += `&id=${req.query.id[i]}`;
+                }
+            }    
         }
 
         var roomData = await recnet.getData(szUrl + szParams);
