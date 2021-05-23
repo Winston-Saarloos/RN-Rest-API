@@ -70,6 +70,61 @@ app.get("/images/global/", async (req, res) => {
     }
 });
 
+// Get request for https://accounts.rec.net/account/bulk
+app.get("/bulk/users", async (req, res) => {
+    if (req.query.id) {
+        var szUrl = 'https://accounts.rec.net/account/bulk';
+        var szParams = '';
+
+        for (var i = 0; i < req.query.id.length; i++) {
+            if (i === 0) {
+                szParams = `?id=${req.query.id[i]}`;
+            } else {
+                szParams += `&id=${req.query.id[i]}`;
+            }
+        }
+
+        var userData = await recnet.getData(szUrl + szParams);
+        res.json(userData);
+    } else {
+        res.send("/bulk/users :  Missing 'id' query string parameter.");
+    }
+});
+
+// Get request for https://rooms.rec.net/rooms/bulk
+app.get("/bulk/rooms", async (req, res) => {
+    if (req.query.id) {
+        var szUrl = 'https://rooms.rec.net/rooms/bulk';
+        var szParams = '';
+
+        for (var i = 0; i < req.query.id.length; i++) {
+            if (i === 0) {
+                szParams = `?id=${req.query.id[i]}`;
+            } else {
+                szParams += `&id=${req.query.id[i]}`;
+            }
+        }
+
+        var roomData = await recnet.getData(szUrl + szParams);
+        res.json(roomData);
+    } else {
+        res.send("/bulk/rooms :  Missing 'id' query string parameter.");
+    }
+});
+
+// https://api.rec.net/api/playerevents/v1/bulk
+app.get("/bulk/events", async (req, res) => {
+    if (req.query.id) {
+        var szUrl = 'https://api.rec.net/api/playerevents/v1/bulk';
+
+        var eventData = await recnet.getBulkEventInfo(req.query.id, szUrl);
+
+        res.json(eventData);
+    } else {
+        res.send("/bulk/events :  Missing 'id' query string parameter.");
+    }
+});
+
 app.get("/images/", async (req, res) => {
 
     // List of possible query parameters (This should probably become request JSON eventually)
