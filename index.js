@@ -9,13 +9,13 @@ let port = process.env.PORT || 3000;
 
 // RecNet Modules
 var recnet = require('./recNet');
-var versionNumber = '0.7.1'
+var versionNumber = '0.7.2'
 
 app.use(cors());
 
 app.get("/", (req, res) => {
     //res.send("RN-ExtraTools.com API is online! V" + versionNumber);
-    responseJson(res, {}, 200, "RN-ExtraTools.com API is online! V" + versionNumber);
+    responseJson(res, [], 200, "RN-ExtraTools.com API is online! V" + versionNumber);
 });
 
 // Takes a player's username or ID and returns back data on the user
@@ -70,7 +70,7 @@ app.get("/images/global/", async (req, res) => {
         res.json(oGlobalData);
 
     } else {
-        responseJson(res, {}, 405, END_POINT_ADDRESS & "Supplied parameter is not permitted.");
+        responseJson(res, [], 405, END_POINT_ADDRESS & "Supplied parameter is not permitted.");
         return;
     }
 });
@@ -98,7 +98,7 @@ app.get("/bulk/users", async (req, res) => {
         res.json(userData);
 
     } else {
-        responseJson(res, {}, 405, "/bulk/users :  Missing 'id' query string parameter.");
+        responseJson(res, [], 405, "/bulk/users :  Missing 'id' query string parameter.");
     }
 });
 
@@ -125,7 +125,7 @@ app.get("/bulk/rooms", async (req, res) => {
         res.json(roomData);
 
     } else {
-        responseJson(res, {}, 405, "/bulk/rooms :  Missing 'id' query string parameter.");
+        responseJson(res, [], 405, "/bulk/rooms :  Missing 'id' query string parameter.");
     }
 });
 
@@ -138,7 +138,7 @@ app.get("/bulk/events", async (req, res) => {
 
         res.json(eventData);
     } else {
-        responseJson(res, {}, 405, "/bulk/events :  Missing 'id' query string parameter.");
+        responseJson(res, [], 405, "/bulk/events :  Missing 'id' query string parameter.");
     }
 });
 
@@ -190,12 +190,12 @@ app.get("/images/", async (req, res) => {
 
             // You cannot provide both 'u' and 'uid' parameter arguments
             if (req.query.u && req.query.uid) {
-                responseJson(res, {}, 405, END_POINT_ADDRESS & "Only username OR user ID can be supplied.");
+                responseJson(res, [], 405, END_POINT_ADDRESS & "Only username OR user ID can be supplied.");
                 return;
             }
 
             if (!req.query.u && !req.query.uid) {
-                responseJson(res, {}, 405, "A username or user ID must be provided with type 1 and 2 requests.");
+                responseJson(res, [], 405, "A username or user ID must be provided with type 1 and 2 requests.");
                 return;
             }
 
@@ -209,9 +209,9 @@ app.get("/images/", async (req, res) => {
                     console.log(`Error Status: ${status}`);
 
                     if (status == 404) {
-                        responseJson(res, {}, status, 'Username did not exist on RecNet server.');
+                        responseJson(res, [], status, 'Username did not exist on RecNet server.');
                     } else {
-                        responseJson(res, {}, status, `An error occured fetching user information. Status Code: ${status}`);
+                        responseJson(res, [], status, `An error occured fetching user information. Status Code: ${status}`);
                     }
                 } else {
                     accountId = userInfoObject.accountId;
@@ -228,12 +228,12 @@ app.get("/images/", async (req, res) => {
                 accountId = parseInt(req.query.uid);
 
                 if (accountId != req.query.uid) {
-                    responseJson(res, {}, 405, END_POINT_ADDRESS + 'UID value must be an integer value.');
+                    responseJson(res, [], 405, END_POINT_ADDRESS + 'UID value must be an integer value.');
                     return;
                 }
 
                 if (accountId <= 0) {
-                    responseJson(res, {}, 405, END_POINT_ADDRESS + 'UID value must be greater than 0.');
+                    responseJson(res, [], 405, END_POINT_ADDRESS + 'UID value must be greater than 0.');
                     return;
                 }
             }
@@ -260,7 +260,7 @@ app.get("/images/", async (req, res) => {
             var sort = parseInt(req.query.sort);
 
             if (sort != req.query.sort) {
-                responseJson(res, {}, 405, END_POINT_ADDRESS + 'Sort value must be an integer value [1-6].');
+                responseJson(res, [], 405, END_POINT_ADDRESS + 'Sort value must be an integer value [1-6].');
                 return;
             }
 
@@ -283,7 +283,7 @@ app.get("/images/", async (req, res) => {
                     imageData = imageData.sort((a, b) => parseInt(b.CommentCount) - parseInt(a.CommentCount));
                     break;
                 default: //
-                    responseJson(res, {}, 405, END_POINT_ADDRESS + 'Invalid sort provided value supplied should be [1-6].');
+                    responseJson(res, [], 405, END_POINT_ADDRESS + 'Invalid sort provided value supplied should be [1-6].');
                     return;
             }
         }
@@ -292,7 +292,7 @@ app.get("/images/", async (req, res) => {
     if (imageData.length > 0){
         responseJson(res, imageData, 200, '');
     } else {
-        responseJson(res, {}, 500, "An error occured fetching image data from Rec.net");
+        responseJson(res, [], 500, "An error occured fetching image data from Rec.net");
     }
 });
 

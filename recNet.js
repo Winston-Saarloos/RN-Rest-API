@@ -12,7 +12,7 @@ async function getUserInfo(recRoomUsername) {
 async function getData(url) {
      return new Promise(function (resolve, reject) {
         var result = {
-            dataObject: {},
+            dataObject: [],
             status: 0,
             message: ''
         }
