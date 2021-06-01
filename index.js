@@ -9,12 +9,13 @@ let port = process.env.PORT || 3000;
 
 // RecNet Modules
 var recnet = require('./recNet');
-var versionNumber = '0.5.11'
+var versionNumber = '0.7.0'
 
 app.use(cors());
 
 app.get("/", (req, res) => {
-    res.send("RN-ExtraTools.com API is online! V" + versionNumber);
+    //res.send("RN-ExtraTools.com API is online! V" + versionNumber);
+    responseJson(res, {}, 200, "RN-ExtraTools.com API is online! V" + versionNumber);
 });
 
 // Takes a player's username or ID and returns back data on the user
@@ -23,17 +24,20 @@ app.get("/account/", async (req, res) => {
     if (req.query.u) { // ?u={username}
         var url = 'https://accounts.rec.net/account?username=' + req.query.u;
         data = await recnet.getData(url)
-        res.json(data);
+
+        responseJson(res, data, 200, '');
 
     } else if (req.query.id) { // ?id={playerId}
         var url = 'https://accounts.rec.net/account/' + req.query.id;
         data = await recnet.getData(url)
-        res.json(data);
+
+        responseJson(res, data, 200, '');
 
     } else if (req.query.bio) { // ?bio={playerId}
         var url = 'https://accounts.rec.net/account/' + req.query.bio + '/bio';
         data = await recnet.getData(url)
-        res.json(data);
+
+        responseJson(res, data, 200, '');
     }
 });
 
@@ -62,10 +66,11 @@ app.get("/images/global/", async (req, res) => {
 
         var szUrl = 'https://api.rec.net/api/images/v3/feed/global?skip=0&take=' + iReturnAmount + '&since=' + dtToday
         var oGlobalData = await recnet.getData(szUrl);
-        res.json(oGlobalData);
-    
+
+        responseJson(res, oGlobalData, 200, '');
+
     } else {
-        res.send(END_POINT_ADDRESS & "Supplied parameter is not permitted.");
+        responseJson(res, {}, 405, END_POINT_ADDRESS & "Supplied parameter is not permitted.");
         return;
     }
 });
@@ -90,9 +95,10 @@ app.get("/bulk/users", async (req, res) => {
         }
 
         var userData = await recnet.getData(szUrl + szParams);
-        res.json(userData);
+        responseJson(res, userData, 200, "");
+
     } else {
-        res.send("/bulk/users :  Missing 'id' query string parameter.");
+        responseJson(res, {}, 405, "/bulk/users :  Missing 'id' query string parameter.");
     }
 });
 
@@ -112,13 +118,14 @@ app.get("/bulk/rooms", async (req, res) => {
                 } else {
                     szParams += `&id=${req.query.id[i]}`;
                 }
-            }    
+            }
         }
 
         var roomData = await recnet.getData(szUrl + szParams);
-        res.json(roomData);
+        responseJson(res, roomData, 200, "");
+
     } else {
-        res.send("/bulk/rooms :  Missing 'id' query string parameter.");
+        responseJson(res, {}, 405, "/bulk/rooms :  Missing 'id' query string parameter.");
     }
 });
 
@@ -129,9 +136,9 @@ app.get("/bulk/events", async (req, res) => {
 
         var eventData = await recnet.getBulkEventInfo(req.query.id, szUrl);
 
-        res.json(eventData);
+        responseJson(res, eventData, 200, "");
     } else {
-        res.send("/bulk/events :  Missing 'id' query string parameter.");
+        responseJson(res, {}, 405, "/bulk/events :  Missing 'id' query string parameter.");
     }
 });
 
@@ -146,7 +153,11 @@ app.get("/images/", async (req, res) => {
     // - u [username]
     // - take [integer]
     // - skip [integer]
-
+    var resultObject = {
+        data: {},
+        status: 0,
+        message: ''
+    }
 
     // console.log(req.query);
     const END_POINT_ADDRESS = '/images/ : ';
@@ -179,19 +190,32 @@ app.get("/images/", async (req, res) => {
 
             // You cannot provide both 'u' and 'uid' parameter arguments
             if (req.query.u && req.query.uid) {
-                res.send(END_POINT_ADDRESS & "Only username OR user ID can be supplied.");
+                responseJson(res, {}, 405, END_POINT_ADDRESS & "Only username OR user ID can be supplied.");
                 return;
             }
 
             if (!req.query.u && !req.query.uid) {
-                res.send("A username or user ID must be provided with type 1 and 2 requests.");
+                responseJson(res, {}, 405, "A username or user ID must be provided with type 1 and 2 requests.");
                 return;
             }
 
             if (req.query.u) { // ?u={username
                 console.log("Looking up user ID..");
-                userInfoObject = await recnet.getUserInfo(req.query.u);
-                accountId = userInfoObject.accountId;
+                var userInfo = await recnet.getUserInfo(req.query.u);
+                userInfoObject = userInfo.dataObject;
+
+                if (userInfo.status != 200) {
+                    var status = userInfo.status;
+                    console.log(`Error Status: ${status}`);
+
+                    if (status == 404) {
+                        responseJson(res, {}, status, 'Username did not exist on RecNet server.');
+                    } else {
+                        responseJson(res, {}, status, `An error occured fetching user information. Status Code: ${status}`);
+                    }
+                } else {
+                    accountId = userInfoObject.accountId;
+                }
 
                 if (type == 1) {
                     url = `https://api.rec.net/api/images/v3/feed/player/${accountId}?skip=${skipAmount}&take=${takeAmount}`;
@@ -204,12 +228,12 @@ app.get("/images/", async (req, res) => {
                 accountId = parseInt(req.query.uid);
 
                 if (accountId != req.query.uid) {
-                    res.send(END_POINT_ADDRESS + 'UID value must be an integer value.');
+                    responseJson(res, {}, 405, END_POINT_ADDRESS + 'UID value must be an integer value.');
                     return;
                 }
 
                 if (accountId <= 0) {
-                    res.send(END_POINT_ADDRESS + 'UID value must be greater than 0.');
+                    responseJson(res, {}, 405, END_POINT_ADDRESS + 'UID value must be greater than 0.');
                     return;
                 }
             }
@@ -222,8 +246,8 @@ app.get("/images/", async (req, res) => {
 
     var imageData = {};
     if (url != '') {
-        imageData = await recnet.getData(url);
-
+        var imageObject = await recnet.getData(url);
+        var imageData = imageObject.dataObject;
         // Filter Image Data TODO
         // Sort Image Data
         // Newest To Oldest = 0 (default)
@@ -236,7 +260,7 @@ app.get("/images/", async (req, res) => {
             var sort = parseInt(req.query.sort);
 
             if (sort != req.query.sort) {
-                res.send(END_POINT_ADDRESS + ' sort value must be an integer value [0-5].');
+                responseJson(res, {}, 405, END_POINT_ADDRESS + 'Sort value must be an integer value [1-6].');
                 return;
             }
 
@@ -259,16 +283,16 @@ app.get("/images/", async (req, res) => {
                     imageData = imageData.sort((a, b) => parseInt(b.CommentCount) - parseInt(a.CommentCount));
                     break;
                 default: //
-                    res.send(END_POINT_ADDRESS + 'Invalid sort provided value supplied should be [0-5].');
+                    responseJson(res, {}, 405, END_POINT_ADDRESS + 'Invalid sort provided value supplied should be [1-6].');
                     return;
             }
         }
     }
 
     if (imageData.length > 0){
-        res.json(imageData);
+        responseJson(res, imageData, 200, '');
     } else {
-        res.send("An error occured fetching image data from Rec.net");
+        responseJson(res, {}, 500, "An error occured fetching image data from Rec.net");
     }
 });
 
@@ -287,4 +311,8 @@ app.listen(port, () => {
     console.log(`Server running on port http://localhost:${port}`);
 });
 
+
+async function responseJson(response, data, status, message) {
+    response.json({dataObject: data, status: status, message: message});
+}
 // Example Filter String: A:GoldenTrophy|U:Rocko
