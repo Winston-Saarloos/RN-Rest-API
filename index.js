@@ -9,7 +9,7 @@ let port = process.env.PORT || 3000;
 
 // RecNet Modules
 var recnet = require('./recNet');
-var versionNumber = '0.7.0'
+var versionNumber = '0.7.1'
 
 app.use(cors());
 
@@ -25,19 +25,19 @@ app.get("/account/", async (req, res) => {
         var url = 'https://accounts.rec.net/account?username=' + req.query.u;
         data = await recnet.getData(url)
 
-        responseJson(res, data, 200, '');
+        res.json(data);
 
     } else if (req.query.id) { // ?id={playerId}
         var url = 'https://accounts.rec.net/account/' + req.query.id;
         data = await recnet.getData(url)
 
-        responseJson(res, data, 200, '');
+        res.json(data);
 
     } else if (req.query.bio) { // ?bio={playerId}
         var url = 'https://accounts.rec.net/account/' + req.query.bio + '/bio';
         data = await recnet.getData(url)
 
-        responseJson(res, data, 200, '');
+        res.json(data);
     }
 });
 
@@ -67,7 +67,7 @@ app.get("/images/global/", async (req, res) => {
         var szUrl = 'https://api.rec.net/api/images/v3/feed/global?skip=0&take=' + iReturnAmount + '&since=' + dtToday
         var oGlobalData = await recnet.getData(szUrl);
 
-        responseJson(res, oGlobalData, 200, '');
+        res.json(oGlobalData);
 
     } else {
         responseJson(res, {}, 405, END_POINT_ADDRESS & "Supplied parameter is not permitted.");
@@ -95,7 +95,7 @@ app.get("/bulk/users", async (req, res) => {
         }
 
         var userData = await recnet.getData(szUrl + szParams);
-        responseJson(res, userData, 200, "");
+        res.json(userData);
 
     } else {
         responseJson(res, {}, 405, "/bulk/users :  Missing 'id' query string parameter.");
@@ -122,7 +122,7 @@ app.get("/bulk/rooms", async (req, res) => {
         }
 
         var roomData = await recnet.getData(szUrl + szParams);
-        responseJson(res, roomData, 200, "");
+        res.json(roomData);
 
     } else {
         responseJson(res, {}, 405, "/bulk/rooms :  Missing 'id' query string parameter.");
@@ -136,7 +136,7 @@ app.get("/bulk/events", async (req, res) => {
 
         var eventData = await recnet.getBulkEventInfo(req.query.id, szUrl);
 
-        responseJson(res, eventData, 200, "");
+        res.json(eventData);
     } else {
         responseJson(res, {}, 405, "/bulk/events :  Missing 'id' query string parameter.");
     }
