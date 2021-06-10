@@ -9,7 +9,8 @@ let port = process.env.PORT || 3000;
 
 // RecNet Modules
 var recnet = require('./recNet');
-var versionNumber = '0.7.3'
+var imageHelper = require('./classes/imageHelper');
+var versionNumber = '0.7.4'
 
 app.use(cors());
 
@@ -241,7 +242,170 @@ app.get("/images/", async (req, res) => {
     if (url != '') {
         var imageObject = await recnet.getData(url);
         var imageData = imageObject.dataObject;
-        // Filter Image Data TODO
+
+        // Filter Image Data
+        if (req.query.filter) {
+            // TODO validation on the filter string
+
+            // Function GET/PARSE filter values into array of filter values
+
+            var filterValues = imageHelper.parseFilterValues(req.query.filter);
+            console.log(`Filter Values: ${filterValues}`);
+
+            var filteredImageCollection = [];
+
+            // for each image
+            if (filterValues.length != 0) {
+                imageData.forEach(image => {
+
+                    // for each filter item (verify image has the correct criteria)
+                    var imageMustMatchAllFilters = true; // TODO MAKE THIS TOGGLEABLE ON THE UI
+                    var imageMatchesAllFilterCriteria = true;
+
+                    var imageMatchedAtleastOneCriteria = false;
+                    filterValues.forEach(filter => {
+                        var filterParts = filter.split("|");
+
+                        switch (filterParts[0]) {
+                            case 'A':
+                                // Activity
+                                // Example Value: A|GoldenTrophy
+                                if (image.RoomId == filterParts[1]) {
+                                    imageMatchedAtleastOneCriteria = true;
+                                } else if (imageMustMatchAllFilters) {
+                                    imageMatchesAllFilterCriteria = false;
+                                }
+                                break;
+
+                            case '!A':
+                                // Not Activity
+                                // Example Value: !A|GoldenTrophy
+                                if (image.RoomId != filterParts[1]) {
+                                    imageMatchedAtleastOneCriteria = true;
+                                } else if (imageMustMatchAllFilters) {
+                                    imageMatchesAllFilterCriteria = false;
+                                }
+                                break;
+
+                            case 'U':
+                                // User
+                                // Example Value: U|Boethiah
+                                //console.log(image.TaggedPlayerIds.length);
+                                if (image.TaggedPlayerIds.length === 0) {
+                                    imageMatchesAllFilterCriteria = false;
+                                    break;
+                                }
+
+                                var taggedPlayers = [];
+                                image.TaggedPlayerIds.forEach(player => { taggedPlayers.push(player) });
+                                if ((taggedPlayers.findIndex((player) => player == filterParts[1]) > -1) && imageMatchesAllFilterCriteria) {
+                                    imageMatchedAtleastOneCriteria = true;
+                                } else if (imageMustMatchAllFilters) {
+                                    imageMatchesAllFilterCriteria = false;
+                                }
+                                break;
+
+                            case '!U':
+                                // Not (A Given User)
+                                // Example Value: !U|Boethiah
+                                if (image.TaggedPlayerIds.length === 0) {
+                                    imageMatchesAllFilterCriteria = false;
+                                    break;
+                                }
+
+                                var taggedPlayers = [];
+                                image.TaggedPlayerIds.forEach(player => { taggedPlayers.push(player) });
+                                if (!(taggedPlayers.findIndex((player) => player == filterParts[1]) > -1) && imageMatchesAllFilterCriteria) {
+                                    imageMatchedAtleastOneCriteria = true;
+                                } else if (imageMustMatchAllFilters) {
+                                    imageMatchesAllFilterCriteria = false;
+                                }
+                                break;
+                            
+                            case 'E':
+                                // Event
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            case '!E':
+                                // Not Event
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            case 'D':
+                                // Date
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            case '!D':
+                                // Not (Given Date)
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            case 'DR':
+                                // Date Range
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            case '!DR':
+                                // Not (Given Date Range)
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            case 'CC':
+                                // Comment Count
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            case '!CC':
+                                // Not Comment Count
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            case 'LC':
+                                // Like Count
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            case '!LC':
+                                // Not Like Count
+                                // Example Value: Not Implemented Yet
+
+                                break;
+
+                            default:
+                                //error occured log to console
+                                console.log("An error occured parsing filter type: " + filterType);
+                        }
+                    });
+
+                    if (imageMustMatchAllFilters && imageMatchesAllFilterCriteria) {
+                        filteredImageCollection.push(image);
+                    } else if (!(imageMustMatchAllFilters) && imageMatchedAtleastOneCriteria) {
+                        filteredImageCollection.push(image);
+                    }
+                });
+            };
+
+            // Assign the results back to the original imageData collection
+            imageData = filteredImageCollection;
+        }
+
+        //https://rn-rest-api.herokuapp.com/images?u=Winston.Saarloos&sort=1&type=1&skip=0&take=100000&filter=U%7C181665
+
+        // Decoded Filter String: U|181665
+        // Encoded Filter String: U%7C181665
+        // | = %7C
+
         // Sort Image Data
         // Newest To Oldest = 0 (default)
         // Oldest To Newest = 1 
