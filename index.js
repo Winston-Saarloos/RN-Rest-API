@@ -10,7 +10,7 @@ let port = process.env.PORT || 3000;
 // RecNet Modules
 var recnet = require('./recNet');
 var imageHelper = require('./classes/imageHelper');
-var versionNumber = '0.7.4'
+var versionNumber = '0.7.5'
 
 app.use(cors());
 
@@ -125,8 +125,12 @@ app.get("/bulk/rooms", async (req, res) => {
         var roomData = await recnet.getData(szUrl + szParams);
         res.json(roomData);
 
+    } else if (req.query.name) {
+        var szUrl = 'https://rooms.rec.net/rooms/bulk?name=' + req.query.name;
+        var roomData = await recnet.getData(szUrl);
+        res.json(roomData);
     } else {
-        responseJson(res, [], 405, "/bulk/rooms :  Missing 'ID' parameter.");
+        responseJson(res, [], 405, "/bulk/rooms :  Missing 'ID' or 'Name' parameter.");
     }
 });
 
