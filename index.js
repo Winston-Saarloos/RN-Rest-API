@@ -2,6 +2,7 @@ var express = require("express");
 var cors = require('cors');
 //var bodyParser = require('body-parser');
 var moment = require('moment');
+const { DateTime } = require("luxon");
 var app = express();
 let port = process.env.PORT || 3000;
 
@@ -340,13 +341,29 @@ app.get("/images/", async (req, res) => {
 
                             case 'D':
                                 // Date
-                                // Example Value: Not Implemented Yet
+                                var imageDate = DateTime.fromISO(image.CreatedAt);
+                                var filterDate = DateTime.fromISO(filterParts[1]);
+
+                                if (imageDate.year == filterDate.year && imageDate.month == filterDate.month && imageDate.day == filterDate.day) {
+                                    imageMatchedAtleastOneCriteria = true;
+
+                                } else if (imageMustMatchAllFilters) {
+                                    imageMatchesAllFilterCriteria = false;
+                                }
 
                                 break;
 
                             case '!D':
                                 // Not (Given Date)
-                                // Example Value: Not Implemented Yet
+                                var imageDate = DateTime.fromISO(image.CreatedAt);
+                                var filterDate = DateTime.fromISO(filterParts[1]);
+
+                                if (imageDate.year !== filterDate.year && imageDate.month !== filterDate.month && imageDate.day !== filterDate.day) {
+                                    imageMatchedAtleastOneCriteria = true;
+                                    
+                                } else if (imageMustMatchAllFilters) {
+                                    imageMatchesAllFilterCriteria = false;
+                                }
 
                                 break;
 
