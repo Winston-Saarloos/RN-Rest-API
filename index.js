@@ -2,7 +2,8 @@ var express = require("express");
 var cors = require('cors');
 //var bodyParser = require('body-parser');
 var moment = require('moment');
-const { DateTime } = require("luxon");
+const { DateTime, Interval } = require("luxon");
+//Const { Interval } = 'luxon/src/interval.js'
 var app = express();
 let port = process.env.PORT || 3000;
 
@@ -11,7 +12,7 @@ let port = process.env.PORT || 3000;
 // RecNet Modules
 var recnet = require('./recNet');
 var imageHelper = require('./classes/imageHelper');
-var versionNumber = '0.7.5'
+var versionNumber = '0.7.6'
 
 app.use(cors());
 
@@ -369,13 +370,55 @@ app.get("/images/", async (req, res) => {
 
                             case 'DR':
                                 // Date Range
-                                // Example Value: Not Implemented Yet
+                                var imageDate = DateTime.fromISO(image.CreatedAt);
+                                var dateParts = filterParts[1].split("!");
+                                var filterDate1 = DateTime.fromISO(dateParts[0]);
+                                var filterDate2 = DateTime.fromISO(dateParts[1]);
+
+                                if (filterDate1 < filterDate2) { // If D1 is before D2
+                                    var rangeOfTime = Interval.fromDateTimes(filterDate1, filterDate2)
+                                    if (rangeOfTime.contains(imageDate)) {
+                                        imageMatchedAtleastOneCriteria = true;
+                                    } else if (imageMustMatchAllFilters) {
+                                        imageMatchesAllFilterCriteria = false;
+                                    }
+
+                                } else {
+                                    var rangeOfTime = Interval.fromDateTimes(filterDate2, filterDate1)
+                                    if (rangeOfTime.contains(imageDate)) {
+                                        imageMatchedAtleastOneCriteria = true;
+
+                                    } else if (imageMustMatchAllFilters) {
+                                        imageMatchesAllFilterCriteria = false;
+                                    }
+                                }
 
                                 break;
 
                             case '!DR':
                                 // Not (Given Date Range)
-                                // Example Value: Not Implemented Yet
+                                var imageDate = DateTime.fromISO(image.CreatedAt);
+                                var dateParts = filterParts[1].split("!");
+                                var filterDate1 = DateTime.fromISO(dateParts[0]);
+                                var filterDate2 = DateTime.fromISO(dateParts[1]);
+
+                                if (filterDate1 < filterDate2) { // If D1 is before D2
+                                    var rangeOfTime = Interval.fromDateTimes(filterDate1, filterDate2)
+                                    if (!(rangeOfTime.contains(imageDate))) {
+                                        imageMatchedAtleastOneCriteria = true;
+                                    } else if (imageMustMatchAllFilters) {
+                                        imageMatchesAllFilterCriteria = false;
+                                    }
+
+                                } else {
+                                    var rangeOfTime = Interval.fromDateTimes(filterDate2, filterDate1)
+                                    if (!(rangeOfTime.contains(imageDate))) {
+                                        imageMatchedAtleastOneCriteria = true;
+
+                                    } else if (imageMustMatchAllFilters) {
+                                        imageMatchesAllFilterCriteria = false;
+                                    }
+                                }
 
                                 break;
 
@@ -467,11 +510,9 @@ app.get("/images/", async (req, res) => {
         }
     }
 
-    if (imageData.length == 0) {
+    if (imageData.length === 0) {
         responseJson(res, [], 200, "The supplied user does not have any public photos.");
-    }
-
-    if (imageData.length > 0){
+    } else if (imageData.length > 0){
         responseJson(res, imageData, 200, '');
     } else {
         responseJson(res, [], 500, "An error occured fetching image data from Rec.net");
