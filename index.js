@@ -12,7 +12,7 @@ let port = process.env.PORT || 3000;
 // RecNet Modules
 var recnet = require('./recNet');
 var imageHelper = require('./classes/imageHelper');
-var versionNumber = '0.7.7'
+var versionNumber = '0.7.8'
 
 app.use(cors());
 
@@ -240,10 +240,11 @@ app.get("/images/", async (req, res) => {
         } else if (type === 3) { // Global Images (Rec.net home page)
             var dtToday = moment().format();
             url = `https://api.rec.net/api/images/v3/feed/global?skip=${skipAmount}&take=${takeAmount}&since=${dtToday}`;
+            
         } else if (type === 4) {
             if (req.query.room) {
                 var roomInfo = await recnet.getRoomInfo(req.query.room);
-                roomInfoObject = roomInfo.dataObject;
+                roomInfoObject = roomInfo.dataObject[0];
 
                 url = `https://api.rec.net/api/images/v4/room/${roomInfoObject.RoomId}?skip=${skipAmount}&take=${takeAmount}`;    
             }
