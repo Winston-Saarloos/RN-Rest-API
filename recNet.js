@@ -4,9 +4,17 @@ var FormData = require('form-data');
 // Function takes in a RecNet username and returns back user information JSON object
 async function getUserInfo(recRoomUsername) {
     // https://accounts.rec.net/account?username=rocko
-    var url = 'https://accounts.rec.net/account?username=' + recRoomUsername;
-    var userInfo = await getData(url);
-    return userInfo;
+    var szUrl = 'https://accounts.rec.net/account?username=' + recRoomUsername;
+    var oUserInfo = await getData(szUrl);
+    return oUserInfo;
+}
+
+// Function takes in a RecNet Room Name and returns back Room information JSON object
+async function getRoomInfo(roomName) {
+    // https://accounts.rec.net/account?username=rocko
+    var szUrl = `https://rooms.rec.net/rooms/bulk?name=${roomName}`;
+    var oRoomInfo = await getData(szUrl);
+    return oRoomInfo;
 }
 
 async function getData(url) {
@@ -94,5 +102,6 @@ async function getBulkEventInfo(listOfEventIds, url) {
 
 // Export Lines
 module.exports.getUserInfo = getUserInfo;
+module.exports.getRoomInfo = getRoomInfo;
 module.exports.getBulkEventInfo = getBulkEventInfo;
 module.exports.getData = getData;

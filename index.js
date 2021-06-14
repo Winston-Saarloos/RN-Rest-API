@@ -12,7 +12,7 @@ let port = process.env.PORT || 3000;
 // RecNet Modules
 var recnet = require('./recNet');
 var imageHelper = require('./classes/imageHelper');
-var versionNumber = '0.7.6'
+var versionNumber = '0.7.7'
 
 app.use(cors());
 
@@ -128,9 +128,8 @@ app.get("/bulk/rooms", async (req, res) => {
         res.json(roomData);
 
     } else if (req.query.name) {
-        var szUrl = 'https://rooms.rec.net/rooms/bulk?name=' + req.query.name;
-        var roomData = await recnet.getData(szUrl);
-        res.json(roomData);
+        var oRoomData = await recnet.getRoomInfo(req.query.name);
+        res.json(oRoomData);
     } else {
         responseJson(res, [], 405, "/bulk/rooms :  Missing 'ID' or 'Name' parameter.");
     }
@@ -188,7 +187,7 @@ app.get("/images/", async (req, res) => {
         var type = parseInt(req.query.type);
         // Should verify it parses correctly..
 
-        if (type == 1 || type == 2) { // Photo Feed or User Photo Library Types
+        if (type === 1 || type === 2) { // Photo Feed or User Photo Library Types
 
             // You cannot provide both 'u' and 'uid' parameter arguments
             if (req.query.u && req.query.uid) {
@@ -218,9 +217,9 @@ app.get("/images/", async (req, res) => {
                     accountId = userInfoObject.accountId;
                 }
 
-                if (type == 1) {
+                if (type === 1) {
                     url = `https://api.rec.net/api/images/v3/feed/player/${accountId}?skip=${skipAmount}&take=${takeAmount}`;
-                } else if (type == 2) {
+                } else if (type === 2) {
                     url = `https://api.rec.net/api/images/v4/player/${accountId}?skip=${skipAmount}&take=${takeAmount}`;
                 }
 
@@ -238,9 +237,16 @@ app.get("/images/", async (req, res) => {
                 }
             }
 
-        } else if (type == 3) { // Global Images (Rec.net home page)
+        } else if (type === 3) { // Global Images (Rec.net home page)
             var dtToday = moment().format();
             url = `https://api.rec.net/api/images/v3/feed/global?skip=${skipAmount}&take=${takeAmount}&since=${dtToday}`;
+        } else if (type === 4) {
+            if (req.query.room) {
+                var roomInfo = await recnet.getRoomInfo(req.query.room);
+                roomInfoObject = roomInfo.dataObject;
+
+                url = `https://api.rec.net/api/images/v4/room/${roomInfoObject.RoomId}?skip=${skipAmount}&take=${takeAmount}`;    
+            }
         }
     }
 
