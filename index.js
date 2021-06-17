@@ -12,7 +12,7 @@ let port = process.env.PORT || 3000;
 // RecNet Modules
 var recnet = require('./recNet');
 var imageHelper = require('./classes/imageHelper');
-var versionNumber = '0.7.8'
+var versionNumber = '0.7.9'
 
 app.use(cors());
 
@@ -136,15 +136,12 @@ app.get("/bulk/rooms", async (req, res) => {
 });
 
 // https://api.rec.net/api/playerevents/v1/bulk
-app.get("/bulk/events", async (req, res) => {
+app.get("/events/", async (req, res) => {
     if (req.query.id) {
-        var szUrl = 'https://api.rec.net/api/playerevents/v1/bulk';
-
-        var eventData = await recnet.getBulkEventInfo(req.query.id, szUrl);
-
+        var eventData = await recnet.getEventInfo(req.query.id);
         res.json(eventData);
     } else {
-        responseJson(res, [], 405, "/bulk/events :  Missing 'ID' parameter.");
+        responseJson(res, [], 405, "/events :  Missing 'Id' parameter.");
     }
 });
 
@@ -349,8 +346,8 @@ app.get("/images/", async (req, res) => {
 
                             case 'D':
                                 // Date
-                                var imageDate = DateTime.fromISO(image.CreatedAt);
-                                var filterDate = DateTime.fromISO(filterParts[1]);
+                                var imageDate = DateTime.fromISO(image.CreatedAt).toLocal();
+                                var filterDate = DateTime.fromISO(filterParts[1]).toLocal();
 
                                 if (imageDate.year == filterDate.year && imageDate.month == filterDate.month && imageDate.day == filterDate.day) {
                                     imageMatchedAtleastOneCriteria = true;
@@ -363,8 +360,8 @@ app.get("/images/", async (req, res) => {
 
                             case '!D':
                                 // Not (Given Date)
-                                var imageDate = DateTime.fromISO(image.CreatedAt);
-                                var filterDate = DateTime.fromISO(filterParts[1]);
+                                var imageDate = DateTime.fromISO(image.CreatedAt).toLocal();
+                                var filterDate = DateTime.fromISO(filterParts[1]).toLocal();
 
                                 if (imageDate.year !== filterDate.year && imageDate.month !== filterDate.month && imageDate.day !== filterDate.day) {
                                     imageMatchedAtleastOneCriteria = true;
@@ -377,10 +374,10 @@ app.get("/images/", async (req, res) => {
 
                             case 'DR':
                                 // Date Range
-                                var imageDate = DateTime.fromISO(image.CreatedAt);
+                                var imageDate = DateTime.fromISO(image.CreatedAt).toLocal();
                                 var dateParts = filterParts[1].split("!");
-                                var filterDate1 = DateTime.fromISO(dateParts[0]);
-                                var filterDate2 = DateTime.fromISO(dateParts[1]);
+                                var filterDate1 = DateTime.fromISO(dateParts[0]).toLocal();
+                                var filterDate2 = DateTime.fromISO(dateParts[1]).toLocal();
 
                                 if (filterDate1 < filterDate2) { // If D1 is before D2
                                     var rangeOfTime = Interval.fromDateTimes(filterDate1, filterDate2)
@@ -404,10 +401,10 @@ app.get("/images/", async (req, res) => {
 
                             case '!DR':
                                 // Not (Given Date Range)
-                                var imageDate = DateTime.fromISO(image.CreatedAt);
+                                var imageDate = DateTime.fromISO(image.CreatedAt).toLocal();
                                 var dateParts = filterParts[1].split("!");
-                                var filterDate1 = DateTime.fromISO(dateParts[0]);
-                                var filterDate2 = DateTime.fromISO(dateParts[1]);
+                                var filterDate1 = DateTime.fromISO(dateParts[0]).toLocal();
+                                var filterDate2 = DateTime.fromISO(dateParts[1]).toLocal();
 
                                 if (filterDate1 < filterDate2) { // If D1 is before D2
                                     var rangeOfTime = Interval.fromDateTimes(filterDate1, filterDate2)
@@ -525,17 +522,6 @@ app.get("/images/", async (req, res) => {
         responseJson(res, [], 500, "An error occured fetching image data from Rec.net");
     }
 });
-
-
-// Takes in various criteria and returns a set of image results from a user's profile
-
-// Image Locations: Global, User Feed, User Library
-
-// Filter Criteria: 
-// Activity:    A:GoldenTrophy or A!:GoldenTrophy
-// User:        U:Rocko or U!:Rocko
-// Date:        D:1/13/2021
-// Date-Range:  DR:1/1/2021-1/5/2021
 
 app.listen(port, () => {
     console.log(`Server running on port http://localhost:${port}`);

@@ -17,6 +17,13 @@ async function getRoomInfo(roomName) {
     return oRoomInfo;
 }
 
+async function getEventInfo(eventId) {
+    // https://api.rec.net/api/playerevents/v1/${eventId}
+    var szUrl = `https://api.rec.net/api/playerevents/v1/${eventId}`;
+    var oEventInfo = await getData(szUrl);
+    return oEventInfo;
+}
+
 async function getData(url) {
      return new Promise(function (resolve, reject) {
         var result = {
@@ -103,5 +110,6 @@ async function getBulkEventInfo(listOfEventIds, url) {
 // Export Lines
 module.exports.getUserInfo = getUserInfo;
 module.exports.getRoomInfo = getRoomInfo;
+module.exports.getEventInfo = getEventInfo;
 module.exports.getBulkEventInfo = getBulkEventInfo;
 module.exports.getData = getData;
