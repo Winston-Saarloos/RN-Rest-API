@@ -12,7 +12,7 @@ let port = process.env.PORT || 3000;
 // RecNet Modules
 var recnet = require('./recNet');
 var imageHelper = require('./classes/imageHelper');
-var versionNumber = '0.7.9'
+var versionNumber = '0.7.10'
 
 app.use(cors());
 
@@ -28,11 +28,21 @@ app.get("/account/", async (req, res) => {
         var url = 'https://accounts.rec.net/account?username=' + req.query.u;
         data = await recnet.getData(url)
 
+        if (data.status === 404) {
+            data.message = "Username not found.";
+        }
+
         res.json(data);
 
     } else if (req.query.id) { // ?id={playerId}
         var url = 'https://accounts.rec.net/account/' + req.query.id;
         data = await recnet.getData(url)
+
+        if (data.status === 400) {
+            data.message = data.dataObject.errors.accountId;
+        } else if (data.status === 404) {
+            data.message = "User ID not found."
+        }
 
         res.json(data);
 
