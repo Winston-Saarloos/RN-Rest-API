@@ -24,6 +24,52 @@ async function getEventInfo(eventId) {
     return oEventInfo;
 }
 
+async function getBulkUserInfo(collectionOfUserIds) {
+    const AMOUNT_PER_BATCH = 50;
+    var resultObject = {
+        dataObject: [],
+        status: 0,
+        message: ''
+    }
+
+    // break the collection of user IDS into groups of 100
+    while (collectionOfUserIds.length > 0) {
+        var spliceAmount = 0;
+        if (collectionOfUserIds.length > AMOUNT_PER_BATCH) {
+            spliceAmount = AMOUNT_PER_BATCH;
+        } else {
+            spliceAmount = collectionOfUserIds.length;
+        }
+
+        var subCollection = collectionOfUserIds.splice(0, spliceAmount);
+
+        // Create the URL
+        var szUrl = 'https://accounts.rec.net/account/bulk';
+        var szParams = '';
+        for (var i = 0; i < subCollection.length; i++) {
+            if (i === 0) {
+                szParams = `?id=${subCollection[i]}`;
+            } else {
+                szParams += `&id=${subCollection[i]}`;
+            }
+        }
+
+        var userDataResults = await getData(szUrl + szParams);
+        if (userDataResults.status != 200) {
+            resultObject.dataObject = [];
+            resultObject.status = 400;
+            resultObject.message = "An error occured fetching bulk user information.";
+            return resultObject;
+        }
+
+        resultObject.dataObject = resultObject.dataObject.concat(userDataResults.dataObject);
+    }
+
+    resultObject.status = 200;
+
+    return resultObject;
+}
+
 async function getData(url) {
      return new Promise(function (resolve, reject) {
         var result = {
@@ -112,4 +158,5 @@ module.exports.getUserInfo = getUserInfo;
 module.exports.getRoomInfo = getRoomInfo;
 module.exports.getEventInfo = getEventInfo;
 module.exports.getBulkEventInfo = getBulkEventInfo;
+module.exports.getBulkUserInfo = getBulkUserInfo;
 module.exports.getData = getData;

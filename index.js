@@ -12,7 +12,7 @@ let port = process.env.PORT || 3000;
 // RecNet Modules
 var recnet = require('./recNet');
 var imageHelper = require('./classes/imageHelper');
-var versionNumber = '0.7.10'
+var versionNumber = '0.7.11'
 
 app.use(cors());
 
@@ -51,6 +51,48 @@ app.get("/account/", async (req, res) => {
         data = await recnet.getData(url)
 
         res.json(data);
+    }
+});
+
+// Retreives the roles and users who have said roles for a given room
+app.get("/room/roles/", async (req, res) => {
+    const END_POINT_ADDRESS = '/room/roles/';
+    
+    if (req.query.name) {
+        var roomData = await recnet.getData(`https://rooms.rec.net/rooms?name=${req.query.name}&include=4`);
+
+        // create an array of user IDs from the roles list
+        var colUserIds = [];
+        for (var i = 0; i < roomData.dataObject.Roles.length; i++) {
+            colUserIds.push(roomData.dataObject.Roles[i].AccountId);
+        }
+
+        var userData = await recnet.getBulkUserInfo(colUserIds);
+
+        if (userData.status != 200) {
+            responseJson(res, [], 405, "/room/roles :  An error occured fetching bulk user data.");
+        }
+
+        var colEnhancedRoles = [];
+        for (var i = 0; i < roomData.dataObject.Roles.length; i++) { // Loop through each role item
+
+            // Find the user in the user collection
+            for (var x = 0; x < userData.dataObject.length; x++) {
+
+                if (userData.dataObject[x].accountId == roomData.dataObject.Roles[i].AccountId) {
+                    colEnhancedRoles.push({"accountId": userData.dataObject[x].accountId, "username": userData.dataObject[x].username, "displayName": userData.dataObject[x].displayName, "profileImage": userData.dataObject[x].profileImage});
+                    break;
+                }
+            }
+        }
+        roomData.dataObject.Roles = colEnhancedRoles;
+
+        // Return completed data
+        res.json(roomData);
+
+    } else {
+        responseJson(res, [], 405, END_POINT_ADDRESS & "Room name parameter required.");
+        return;
     }
 });
 
