@@ -12,7 +12,7 @@ let port = process.env.PORT || 3000;
 // RecNet Modules
 var recnet = require('./recNet');
 var imageHelper = require('./classes/imageHelper');
-var versionNumber = '0.7.11'
+var versionNumber = '0.7.12'
 
 app.use(cors());
 
@@ -195,6 +195,30 @@ app.get("/events/", async (req, res) => {
     } else {
         responseJson(res, [], 405, "/events :  Missing 'Id' parameter.");
     }
+});
+
+app.get("/status/", async (req, res) => {
+    const ListOfServers = await recnet.getData("https://ns.rec.net/");
+    const keys = Object.keys(ListOfServers.dataObject);
+    const ArrayOfServerURIs = keys.map(key => ({ Name: key, URI: ListOfServers.dataObject[key] }));
+
+    const serverFieldList = [];
+    await Promise.all(ArrayOfServerURIs.map(async (server) => {
+        if (server.Name !== "CDN") {
+            var serverStatus = await recnet.getData(server.URI + "/health");
+            var serverStatusCode = serverStatus.status;
+            if (serverStatus.status !== 200) {
+                downNumber += 1;
+            }
+
+            serverFieldList.push({
+                serverName: server.Name == "WWW" ? "Website (rec.net)" : server.Name,
+                serverStatusCode: serverStatusCode
+            });
+        }
+    }));
+
+    res.json(serverFieldList);
 });
 
 app.get("/images/", async (req, res) => {
