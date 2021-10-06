@@ -12,7 +12,7 @@ let port = process.env.PORT || 3000;
 // RecNet Modules
 var recnet = require('./recNet');
 var imageHelper = require('./classes/imageHelper');
-var versionNumber = '0.7.12'
+var versionNumber = '0.7.13'
 
 app.use(cors());
 
@@ -207,13 +207,12 @@ app.get("/status/", async (req, res) => {
         if (server.Name !== "CDN") {
             var serverStatus = await recnet.getData(server.URI + "/health");
             var serverStatusCode = serverStatus.status;
-            if (serverStatus.status !== 200) {
-                downNumber += 1;
-            }
 
             serverFieldList.push({
-                serverName: server.Name == "WWW" ? "Website (rec.net)" : server.Name,
-                serverStatusCode: serverStatusCode
+                name: server.Name == "WWW" ? "Website (rec.net)" : server.Name,
+                uri: server.URI,
+                statusCode: serverStatusCode,
+                status: serverStatus.DataObject
             });
         }
     }));
