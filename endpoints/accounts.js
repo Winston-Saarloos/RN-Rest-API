@@ -1,10 +1,10 @@
 var recnet = require("../recNet");
+var common = require("../classes/common");
 
 async function getUserInfoFromUsername(req, res) {
   if (req.query.u) {
     // ?u={@name}
-    var url = "https://accounts.rec.net/account?username=" + req.query.u;
-    var data = await recnet.getData(url);
+    var data = await recnet.getData(`https://accounts.rec.net/account?username=${req.query.u}`);
 
     if (data.status === 404) {
       data.message = "Username not found.";
@@ -17,8 +17,7 @@ async function getUserInfoFromUsername(req, res) {
 async function getUserInfoFromId(req, res) {
   if (req.query.id) {
     // ?id={playerId}
-    var url = "https://accounts.rec.net/account/" + req.query.id;
-    var data = await recnet.getData(url);
+    var data = await recnet.getData(`https://accounts.rec.net/account/${req.query.id}`);
 
     if (data.status === 400) {
       data.message = data.dataObject.errors.accountId;
@@ -33,13 +32,34 @@ async function getUserInfoFromId(req, res) {
 async function getUserBioFromId(req, res) {
   if (req.query.bio) {
     // ?bio={playerId}
-    var url = "https://accounts.rec.net/account/" + req.query.bio + "/bio";
-    var data = await recnet.getData(url);
+    res.json(await recnet.getData(`https://accounts.rec.net/account/${req.query.bio}/bio`));
+  }
+}
 
-    res.json(data);
+async function getBulkAccountsById(req, res) {
+  if (req.query.id) {
+    var szUrl = "https://accounts.rec.net/account/bulk";
+    var szParams = "";
+
+    if (typeof req.query.id == "string") {
+      szParams = `?id=${req.query.id}`;
+    } else {
+      for (var i = 0; i < req.query.id.length; i++) {
+        if (i === 0) {
+          szParams = `?id=${req.query.id[i]}`;
+        } else {
+          szParams += `&id=${req.query.id[i]}`;
+        }
+      }
+    }
+
+    res.json(await recnet.getData(szUrl + szParams));
+  } else {
+    common.responseJson(res, [], 405, "/bulk/users :  Missing 'ID' parameter.");
   }
 }
 
 module.exports.getUserInfoFromUsername = getUserInfoFromUsername;
 module.exports.getUserInfoFromId = getUserInfoFromId;
 module.exports.getUserBioFromId = getUserBioFromId;
+module.exports.getBulkAccountsById = getBulkAccountsById;
