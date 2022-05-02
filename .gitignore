@@ -105,3 +105,11 @@ dist
 
 # Local Netlify folder
 .netlify
+
+# Firebase Stuff
+.firebaserc
+firebase.json
+firestore.indexes.json
+firestore.rules
+serviceAccountKey.json
+functions

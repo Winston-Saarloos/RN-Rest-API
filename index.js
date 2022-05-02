@@ -1,9 +1,32 @@
 var express = require("express");
 var cors = require("cors");
+const dotenv = require('dotenv');
+dotenv.config();
+const {initializeApp, applicaqtionDefault, cert} = require('firebase-admin/app');
+const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
 var moment = require("moment");
 const { DateTime, Interval } = require("luxon");
 var app = express();
 let port = process.env.PORT || 3000;
+
+const serviceAccount = {
+  "type": process.env.FIREBASE_ACCOUNT_TYPE,
+  "project_id": process.env.FIREBASE_PROJECT_ID,
+  "private_key_id": process.env.FIREBASE_PRIVATE_KEY_ID,
+  "private_key": process.env.FIREBASE_PRIVATE_KEY,
+  "client_email": process.env.FIREBASE_CLIENT_EMAIL,
+  "client_id": process.env.FIREBASE_CLIENT_ID,
+  "auth_uri": process.env.FIREBASE_AUTH_URI,
+  "token_uri": process.env.FIREBASE_TOKEN_URI,
+  "auth_provider_x509_cert_url": process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+  "client_x509_cert_url": process.env.FIREBASE_CLIENT_X509_CERT_URL
+};
+
+initializeApp({
+  credential: cert(serviceAccount)
+});
+
+const db = getFirestore();
 
 // Classes
 
@@ -13,12 +36,24 @@ var imageHelper = require("./classes/imageHelper");
 var accounts = require("./endpoints/accounts");
 var images = require("./endpoints/images");
 var common = require("./classes/common");
-var versionNumber = "0.7.14";
+var versionNumber = "0.7.15";
 
 app.use(cors());
 
 app.get("/", (req, res) => {
   common.responseJson(res, [], 200, "API is online! V" + versionNumber);
+});
+
+app.get("/firestore/test/", async (req, res) => {
+  // https://firebase.google.com/docs/firestore/quickstart?authuser=0&hl=en
+  const snapshot = await db.collection('test').get();
+
+  var results = [];
+  snapshot.forEach((doc) => {
+    results.push({id: doc.id, data: doc.data()})
+  });
+
+  common.responseJson(res, results, 200, '');
 });
 
 // Takes a player's username or ID and returns back data on the user
