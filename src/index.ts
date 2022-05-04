@@ -20,11 +20,7 @@ const serviceAccount = {
 };
 
 initializeApp({
-  credential: cert({
-    projectId: serviceAccount.project_id,
-    clientEmail: serviceAccount.client_email,
-    privateKey: serviceAccount.private_key,
-  }),
+  credential: cert(serviceAccount),
 });
 
 const db = getFirestore();
