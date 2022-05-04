@@ -1,0 +1,4 @@
+{
+    "Date": "Timestamp - Date/Time of match",
+    "Teams": "Array of Team Doc References"
+}

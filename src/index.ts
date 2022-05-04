@@ -1,12 +1,9 @@
 var express = require("express");
 var cors = require("cors");
-const dotenv = require('dotenv');
+var dotenv = require('dotenv');
 dotenv.config();
 const {initializeApp, applicaqtionDefault, cert} = require('firebase-admin/app');
-const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
-var moment = require("moment");
-const { DateTime, Interval } = require("luxon");
-var app = express();
+const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');var app = express();
 let port = process.env.PORT || 3000;
 
 const serviceAccount = {
@@ -23,7 +20,11 @@ const serviceAccount = {
 };
 
 initializeApp({
-  credential: cert(serviceAccount)
+  credential: cert({
+    projectId: serviceAccount.project_id,
+    clientEmail: serviceAccount.client_email,
+    privateKey: serviceAccount.private_key,
+  }),
 });
 
 const db = getFirestore();
@@ -36,20 +37,20 @@ var imageHelper = require("./classes/imageHelper");
 var accounts = require("./endpoints/accounts");
 var images = require("./endpoints/images");
 var common = require("./classes/common");
-var versionNumber = "0.7.15";
+var versionNumber = "0.8.0";
 
 app.use(cors());
 
-app.get("/", (req, res) => {
+app.get("/", (req: Express.Request, res: Express.Response) => {
   common.responseJson(res, [], 200, "API is online! V" + versionNumber);
 });
 
-app.get("/firestore/test/", async (req, res) => {
+app.get("/firestore/test/", async (req: Express.Request, res: Express.Response) => {
   // https://firebase.google.com/docs/firestore/quickstart?authuser=0&hl=en
   const snapshot = await db.collection('test').get();
 
-  var results = [];
-  snapshot.forEach((doc) => {
+  var results: { id: any; data: any; }[] = [];
+  snapshot.forEach((doc: { id: any; data: () => any; }) => {
     results.push({id: doc.id, data: doc.data()})
   });
 
@@ -57,14 +58,14 @@ app.get("/firestore/test/", async (req, res) => {
 });
 
 // Takes a player's username or ID and returns back data on the user
-app.get("/account/", async (req, res) => {
+app.get("/account/", async (req: Express.Request, res: Express.Response) => {
   accounts.getUserInfoFromUsername(req, res);
   accounts.getUserInfoFromId(req, res);
   accounts.getUserBioFromId(req, res);
 });
 
 // Retreives the roles and users who have said roles for a given room
-app.get("/room/roles/", async (req, res) => {
+app.get("/room/roles/", async (req: { query: { name: any; }; }, res: { json: (arg0: any) => void; }) => {
   const END_POINT_ADDRESS = "/room/roles/";
 
   if (req.query.name) {
@@ -118,27 +119,27 @@ app.get("/room/roles/", async (req, res) => {
       res,
       [],
       405,
-      END_POINT_ADDRESS & "Room name parameter required."
+      `${END_POINT_ADDRESS} Room name parameter required.`
     );
     return;
   }
 });
 
-app.get("/images/global/", async (req, res) => {
+app.get("/images/global/", async (req: Express.Request, res: Express.Response) => {
     images.getGlobalImages(req, res);
 });
 
 // Get request for https://accounts.rec.net/account/bulk
-app.get("/bulk/users", async (req, res) => {
+app.get("/bulk/users", async (req: Express.Request, res: Express.Response) => {
   accounts.getBulkAccountsById(req, res);
 });
 
-app.get("/bulk/accounts", async (req, res) => {
+app.get("/bulk/accounts", async (req: Express.Request, res: Express.Response) => {
     accounts.getBulkAccountsById(req, res);
 });
 
 // Get request for https://rooms.rec.net/rooms/bulk
-app.get("/bulk/rooms", async (req, res) => {
+app.get("/bulk/rooms", async (req: { query: { id: string | any[]; name: any; }; }, res: { json: (arg0: any) => void; }) => {
   if (req.query.id) {
     var szUrl = "https://rooms.rec.net/rooms/bulk";
     var szParams = "";
@@ -171,7 +172,7 @@ app.get("/bulk/rooms", async (req, res) => {
 });
 
 // https://api.rec.net/api/playerevents/v1/bulk
-app.get("/events/", async (req, res) => {
+app.get("/events/", async (req: { query: { id: any; }; }, res: { json: (arg0: any) => void; }) => {
   if (req.query.id) {
     var eventData = await recnet.getEventInfo(req.query.id);
     res.json(eventData);
@@ -180,7 +181,7 @@ app.get("/events/", async (req, res) => {
   }
 });
 
-app.get("/status/", async (req, res) => {
+app.get("/status/", async (req: Express.Request, res: { json: (arg0: any[]) => void; }) => {
   const ListOfServers = await recnet.getData("https://ns.rec.net/");
   const keys = Object.keys(ListOfServers.dataObject);
   const ArrayOfServerURIs = keys.map((key) => ({
@@ -188,7 +189,7 @@ app.get("/status/", async (req, res) => {
     URI: ListOfServers.dataObject[key],
   }));
 
-  const serverFieldList = [];
+  const serverFieldList: { name: string; uri: any; statusCode: any; status: any; }[] = [];
   await Promise.all(
     ArrayOfServerURIs.map(async (server) => {
       if (server.Name !== "CDN") {
@@ -208,7 +209,7 @@ app.get("/status/", async (req, res) => {
   res.json(serverFieldList);
 });
 
-app.get("/images/", async (req, res) => {
+app.get("/images/", async (req: Express.Request, res: Express.Response) => {
     images.ImagesV1(req, res);
 });
 

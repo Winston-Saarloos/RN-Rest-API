@@ -1,0 +1,5 @@
+{
+    "Name" : "String",
+    "Owners": "Array of Document Ref /users/{docId}",
+    "Seasons": "Array of Doc Ref /seasons/{docId}"
+}

@@ -1,10 +1,15 @@
 var recnet = require("../recNet");
 var common = require("../classes/common");
 
-async function getUserInfoFromUsername(req, res) {
+async function getUserInfoFromUsername(
+  req: { query: { u: any } },
+  res: { json: (arg0: any) => void }
+) {
   if (req.query.u) {
     // ?u={@name}
-    var data = await recnet.getData(`https://accounts.rec.net/account?username=${req.query.u}`);
+    var data = await recnet.getData(
+      `https://accounts.rec.net/account?username=${req.query.u}`
+    );
 
     if (data.status === 404) {
       data.message = "Username not found.";
@@ -14,10 +19,15 @@ async function getUserInfoFromUsername(req, res) {
   }
 }
 
-async function getUserInfoFromId(req, res) {
+async function getUserInfoFromId(
+  req: { query: { id: any } },
+  res: { json: (arg0: any) => void }
+) {
   if (req.query.id) {
     // ?id={playerId}
-    var data = await recnet.getData(`https://accounts.rec.net/account/${req.query.id}`);
+    var data = await recnet.getData(
+      `https://accounts.rec.net/account/${req.query.id}`
+    );
 
     if (data.status === 400) {
       data.message = data.dataObject.errors.accountId;
@@ -29,14 +39,24 @@ async function getUserInfoFromId(req, res) {
   }
 }
 
-async function getUserBioFromId(req, res) {
+async function getUserBioFromId(
+  req: { query: { bio: any } },
+  res: { json: (arg0: any) => void }
+) {
   if (req.query.bio) {
     // ?bio={playerId}
-    res.json(await recnet.getData(`https://accounts.rec.net/account/${req.query.bio}/bio`));
+    res.json(
+      await recnet.getData(
+        `https://accounts.rec.net/account/${req.query.bio}/bio`
+      )
+    );
   }
 }
 
-async function getBulkAccountsById(req, res) {
+async function getBulkAccountsById(
+  req: { query: { id: string | any[] } },
+  res: { json: (arg0: any) => void }
+) {
   if (req.query.id) {
     var szUrl = "https://accounts.rec.net/account/bulk";
     var szParams = "";
